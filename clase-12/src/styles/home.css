@@ -1,0 +1,58 @@
+.home {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Hero de bienvenida */
+.hero {
+  background: linear-gradient(rgba(47, 59, 54, 0.6), rgba(47, 59, 54, 0.6)),
+              url("/assets/banner.jpg") no-repeat center/cover;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  border-radius: 12px;
+  margin-bottom: 40px;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+}
+
+.hero p {
+  font-size: 1.2rem;
+  max-width: 600px;
+}
+
+/* Título de sección */
+.section-title {
+  text-align: center;
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: var(--primary-color);
+}
+.themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;              
+  justify-items: center;  
+  max-width: 1000px;      
+  margin: 0 auto;         
+}

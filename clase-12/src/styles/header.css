@@ -1,0 +1,23 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--secondary-color);
+  padding: 20px 30px;
+  border-bottom: 4px solid var(--primary-color);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  height: 100px;
+}
+
+.title {
+  font-size: 1.8rem;
+  color: var(--primary-color);
+}
