@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enum de categorias para filtrar por seccion
+enum Categoria {
+  DEPORTE
+  FICCION
+  HISTORIA
+  INFANTIL
+}
+
+// Modelo de Libro del front
+model Book {
+  id          Int       @id @default(autoincrement())
+  titulo      String
+  autor       String
+  descripcion String?
+  categoria   Categoria
+  portada     String?
+  createdAt   DateTime  @default(now())
+
+  authorId Int?
+  author   Author? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@unique([titulo, autor, categoria]) // ← esto es una regla que evita duplicar el mismo libro en la misma categoria
+  @@index([categoria])
+  @@index([authorId])
+}
+
+// Modelo de Autor para poder implementar las relaciones, en ingles para que no se me choque todo
+model Author {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+  books  Book[]
+}
+
+// Roles para autorizacion basica en la API
+enum Rol {
+  ADMIN
+  USER
+}
+
+// Usuario del sistema para login con JWT
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String?
+  email        String    @unique
+  passwordHash String
+  role         Rol       @default(USER)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([role])  
+}

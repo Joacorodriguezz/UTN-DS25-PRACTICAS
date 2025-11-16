@@ -1,23 +1,64 @@
-import express from 'express';
-import authRoutes from './routes/auth.routes';
-import libroRoutes from './routes/libros.routes';
-import usuarioRoutes from './routes/usuario.routes';
-import { authenticateAndAuthorize } from './middlewares/auth.middleware'; // Import combined middleware
+import 'dotenv/config'
+import express, { Request, Response, NextFunction } from 'express'
+import cors, { CorsOptions } from 'cors'
+import path from 'path'
 
-const app = express();
+import authRoutes from './routes/auth.routes'
+import { booksRouter } from './routes/books.routes'
+import { userRoutes } from './routes/user.routes'
+import { legacySectionsRouter } from './routes/legacy.sections.routes'
 
-app.use(express.json());
+const app = express()
 
-// Authentication routes are not protected
-app.use('/api/auth', authRoutes);
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
 
-// Protect libros routes (for example, with "USER" role allowed to get and create, and "ADMIN" allowed to delete)
-app.use('/api/books', authenticateAndAuthorize(['USER', 'ADMIN']), libroRoutes);
+const corsOptions: cors.CorsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Cache-Control',
+    'Pragma'
+  ],
+};
+app.use(cors(corsOptions));
 
-// Protect users routes (only "ADMIN" role allowed to manage users)
-app.use('/api/users', authenticateAndAuthorize(['ADMIN']), usuarioRoutes);
+app.use(express.json())
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+const IMGS_DIR = process.env.IMGS_DIR || path.join(process.cwd(), 'imagenes')
+app.use(
+  '/imagenes',
+  express.static(IMGS_DIR, {
+    fallthrough: false,
+    immutable: true,
+    maxAge: '1d',
+  })
+)
+
+app.use('/api/auth', authRoutes)
+
+app.use('/api', legacySectionsRouter)
+app.use('/api', booksRouter)
+app.use('/api/users', userRoutes)
+
+app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }))
+
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ error: 'Not found' })
+})
+
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = typeof err?.statusCode === 'number' ? err.statusCode : 500
+  res.status(status).json({ error: err?.message ?? 'Internal Server Error' })
+})
+
+export default app
