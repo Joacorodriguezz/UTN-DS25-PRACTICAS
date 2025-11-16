@@ -1,0 +1,25 @@
+.detalle-libro-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.libro-imagen-detalle {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .detalle-libro-page {
+    padding: 1rem;
+  }
+  
+  .libro-imagen-detalle {
+    max-width: 100%;
+  }
+}
+
