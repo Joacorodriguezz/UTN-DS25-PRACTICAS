@@ -14,7 +14,7 @@ import {
   updateBookSchema,
 } from '../validations/book.validation';
 
-import { validate } from '../middlewares/validation.middleware';
+import { validate, validateParams } from '../middlewares/validation.middleware';
 
 import { authenticate } from '../middlewares/authenticate.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
@@ -29,7 +29,7 @@ booksRouter.get(
 
 booksRouter.get(
   '/libros/:id',
-  validate(idParamSchema),
+  validateParams(idParamSchema),
   getBookHandler
 );
 
@@ -39,7 +39,7 @@ booksRouter.put(
   '/libros/:id',
   authenticate,
   authorize('ADMIN'),
-  validate(idParamSchema),
+  validateParams(idParamSchema),
   validate(updateBookSchema),
   updateBookHandler
 );
@@ -48,7 +48,7 @@ booksRouter.patch(
   '/libros/:id',
   authenticate,
   authorize('ADMIN'),
-  validate(idParamSchema),
+  validateParams(idParamSchema),
   validate(updateBookSchema),
   updateBookHandler
 );
@@ -57,6 +57,6 @@ booksRouter.delete(
   '/libros/:id',
   authenticate,
   authorize('ADMIN'),
-  validate(idParamSchema),
+  validateParams(idParamSchema),
   deleteBookHandler
 );

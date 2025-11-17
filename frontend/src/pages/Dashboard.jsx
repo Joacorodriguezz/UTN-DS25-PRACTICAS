@@ -29,17 +29,16 @@ function Dashboard() {
   const navigate = useNavigate();
   const { usuario, isAdmin, logout } = useContext(UsuarioContext);
   const [libros, setLibros] = useState([]);
-  const [autores, setAutores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
-    title: "",
-    authorId: "",
-    price: "",
-    imageUrl: "",
-    genre: "",
+    titulo: "",
+    autor: "",
+    portada: "",
+    descripcion: "",
+    categoria: "",
   });
 
   useEffect(() => {
@@ -50,7 +49,6 @@ function Dashboard() {
     }
 
     fetchLibros();
-    fetchAutores();
   }, [navigate, isAdmin]);
 
   const fetchLibros = async () => {
@@ -62,7 +60,8 @@ function Dashboard() {
           Authorization: `Bearer ${token}`,
         },
       });
-      setLibros(response.data);
+      // La respuesta del backend tiene formato { data, total, page, pageSize }
+      setLibros(response.data.data || response.data);
     } catch (err) {
       setError("Error al cargar los libros");
     } finally {
@@ -70,24 +69,14 @@ function Dashboard() {
     }
   };
 
-  const fetchAutores = async () => {
-    // Por ahora, usaremos autores hardcodeados o puedes crear un endpoint para obtenerlos
-    // Por simplicidad, asumiremos que el usuario ingresa el ID del autor
-    setAutores([
-      { id: 1, name: "Gabriel García Márquez" },
-      { id: 2, name: "Pablo Neruda" },
-      { id: 3, name: "Isaac Asimov" },
-    ]);
-  };
-
   const handleOpenDialog = () => {
     setOpenDialog(true);
     setFormData({
-      title: "",
-      authorId: "",
-      price: "",
-      imageUrl: "",
-      genre: "",
+      titulo: "",
+      autor: "",
+      portada: "",
+      descripcion: "",
+      categoria: "",
     });
     setError("");
   };
@@ -102,14 +91,37 @@ function Dashboard() {
     try {
       setError("");
       const token = localStorage.getItem("authToken");
+      
+      // Primero, buscar o crear el autor
+      let authorId = null;
+      if (formData.autor.trim()) {
+        try {
+          const authorResponse = await axios.post(
+            API_ENDPOINTS.AUTHORS.FIND_OR_CREATE,
+            { nombre: formData.autor.trim() },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          authorId = authorResponse.data.data.id;
+        } catch (authorErr) {
+          setError("Error al crear/buscar el autor: " + (authorErr.response?.data?.error || authorErr.message));
+          return;
+        }
+      }
+      
+      // Crear el libro con el formato correcto del backend
       await axios.post(
         API_ENDPOINTS.BOOKS.CREATE,
         {
-          title: formData.title,
-          authorId: parseInt(formData.authorId),
-          price: parseInt(formData.price),
-          imageUrl: formData.imageUrl,
-          genre: formData.genre,
+          titulo: formData.titulo,
+          autor: formData.autor,
+          categoria: formData.categoria,
+          portada: formData.portada || null,
+          descripcion: formData.descripcion || null,
+          authorId: authorId,
         },
         {
           headers: {
@@ -122,7 +134,7 @@ function Dashboard() {
       fetchLibros();
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || "Error al agregar el libro");
+      setError(err.response?.data?.error || err.response?.data?.message || "Error al agregar el libro");
     }
   };
 
@@ -187,24 +199,31 @@ function Dashboard() {
 
       <Grid container spacing={3}>
         {libros.map((libro) => (
-          <Grid item xs={12} sm={6} md={4} key={libro.id}>
+          <Grid key={libro.id} xs={12} sm={6} md={4}>
             <Paper elevation={2} sx={{ p: 2 }}>
-              <img
-                src={libro.imageUrl}
-                alt={libro.title}
-                style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "4px" }}
-              />
+              {libro.portada && (
+                <img
+                  src={libro.portada}
+                  alt={libro.titulo}
+                  style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "4px" }}
+                />
+              )}
               <Typography variant="h6" sx={{ mt: 1 }}>
-                {libro.title}
+                {libro.titulo}
               </Typography>
-              {libro.author && (
-                <Typography variant="body2" color="text.secondary">
-                  {libro.author.name}
+              <Typography variant="body2" color="text.secondary">
+                {libro.author?.nombre || libro.autor || "Autor desconocido"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Categoría: {libro.categoria}
+              </Typography>
+              {libro.descripcion && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  {libro.descripcion.length > 100 
+                    ? libro.descripcion.substring(0, 100) + "..." 
+                    : libro.descripcion}
                 </Typography>
               )}
-              <Typography variant="body1" sx={{ mt: 1, fontWeight: "bold" }}>
-                ${libro.price}
-              </Typography>
               <Box display="flex" justifyContent="flex-end" mt={2}>
                 <IconButton
                   color="error"
@@ -227,44 +246,44 @@ function Dashboard() {
                 label="Título"
                 fullWidth
                 required
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                value={formData.titulo}
+                onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
               />
               <TextField
-                label="ID del Autor"
-                type="number"
+                label="Autor"
                 fullWidth
                 required
-                value={formData.authorId}
-                onChange={(e) => setFormData({ ...formData, authorId: e.target.value })}
-                helperText="Ingresa el ID numérico del autor"
+                value={formData.autor}
+                onChange={(e) => setFormData({ ...formData, autor: e.target.value })}
+                helperText="Se creará el autor automáticamente si no existe"
               />
               <TextField
-                label="Precio"
-                type="number"
+                label="URL de la Portada"
                 fullWidth
-                required
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                value={formData.portada}
+                onChange={(e) => setFormData({ ...formData, portada: e.target.value })}
+                helperText="Opcional"
               />
               <TextField
-                label="URL de la Imagen"
+                label="Descripción"
                 fullWidth
-                required
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                multiline
+                rows={3}
+                value={formData.descripcion}
+                onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                helperText="Opcional"
               />
               <FormControl fullWidth required>
-                <InputLabel>Género</InputLabel>
+                <InputLabel>Categoría</InputLabel>
                 <Select
-                  value={formData.genre}
-                  onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                  label="Género"
+                  value={formData.categoria}
+                  onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                  label="Categoría"
                 >
-                  <MenuItem value="Ciencia_Ficcion">Ciencia Ficción</MenuItem>
-                  <MenuItem value="Fantasia">Fantasía</MenuItem>
-                  <MenuItem value="Novela_Historica">Novela Histórica</MenuItem>
-                  <MenuItem value="Desarrollo_Personal">Desarrollo Personal</MenuItem>
+                  <MenuItem value="DEPORTE">Deporte</MenuItem>
+                  <MenuItem value="FICCION">Ficción</MenuItem>
+                  <MenuItem value="HISTORIA">Historia</MenuItem>
+                  <MenuItem value="INFANTIL">Infantil</MenuItem>
                 </Select>
               </FormControl>
             </Box>

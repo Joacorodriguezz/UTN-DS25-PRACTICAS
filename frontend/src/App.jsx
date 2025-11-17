@@ -20,7 +20,7 @@ function App() {
       </Route>
 
       <Route path="iniciar-sesion" element={<IniciarSesion />} />
-      <Route path="/registracion" element={<Registro />} />
+      <Route path="registro" element={<Registro />} />
     </Routes>
   );
 }

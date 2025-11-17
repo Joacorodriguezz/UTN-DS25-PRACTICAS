@@ -7,10 +7,15 @@ export const API_ENDPOINTS = {
     REGISTER: `${API_BASE_URL}/api/auth/register`,
   },
   BOOKS: {
-    GET_ALL: `${API_BASE_URL}/api/books/books`,
-    GET_BY_ID: (id) => `${API_BASE_URL}/api/books/books/${id}`,
-    CREATE: `${API_BASE_URL}/api/books/books`,
-    DELETE: (id) => `${API_BASE_URL}/api/books/books/${id}`,
+    GET_ALL: `${API_BASE_URL}/api/libros`,
+    GET_BY_ID: (id) => `${API_BASE_URL}/api/libros/${id}`,
+    CREATE: `${API_BASE_URL}/api/libros`,
+    DELETE: (id) => `${API_BASE_URL}/api/libros/${id}`,
+  },
+  AUTHORS: {
+    FIND_OR_CREATE: `${API_BASE_URL}/api/authors`,
+    GET_ALL: `${API_BASE_URL}/api/authors`,
+    SEARCH: `${API_BASE_URL}/api/authors/search`,
   },
 };
 

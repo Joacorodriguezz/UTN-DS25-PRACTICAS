@@ -13,41 +13,53 @@ function Seccion() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  // Mapeo de temas a géneros del backend
-  const temaToGenre = {
-    'deportes': 'Desarrollo_Personal', // Ajustar según los géneros disponibles
-    'ciencia-ficcion': 'Ciencia_Ficcion',
-    'poesia': 'Fantasia', // Ajustar según los géneros disponibles
+  // Mapeo de temas de la URL a categorías del backend
+  const temaToCategoria = {
+    'deportes': 'DEPORTE',
+    'deporte': 'DEPORTE',
+    'ficcion': 'FICCION',
+    'ciencia-ficcion': 'FICCION',
+    'historia': 'HISTORIA',
+    'infantil': 'INFANTIL',
   };
 
   useEffect(() => {
     const fetchLibros = async () => {
       try {
         setCargando(true);
+        setError(null);
         const token = localStorage.getItem("authToken");
-        const response = await axios.get(API_ENDPOINTS.BOOKS.GET_ALL, {
+        
+        // Obtener la categoría correspondiente al tema
+        const categoria = temaToCategoria[tema?.toLowerCase()];
+        
+        // Construir la URL con el parámetro categoria si existe
+        let url = API_ENDPOINTS.BOOKS.GET_ALL;
+        if (categoria) {
+          url += `?categoria=${categoria}`;
+        }
+        
+        const response = await axios.get(url, {
           headers: token ? {
             Authorization: `Bearer ${token}`,
           } : {},
         });
         
-        // Filtrar libros por género si es necesario
-        const genre = temaToGenre[tema];
-        const librosFiltrados = genre 
-          ? response.data.filter(libro => libro.genre === genre)
-          : response.data;
-        
-        setLibros(librosFiltrados);
+        // La respuesta del backend tiene formato { data, total, page, pageSize }
+        const librosData = response.data.data || response.data;
+        setLibros(Array.isArray(librosData) ? librosData : []);
       } catch (err) {
-        // Si no hay token, intentar sin autenticación (puede fallar)
+        console.error("Error al cargar los libros:", err);
         setError("Error al cargar los libros. Por favor, inicia sesión.");
       } finally {
         setCargando(false);
       }
     };
 
-    fetchLibros();
-    document.title = `Sección: ${tema}`;
+    if (tema) {
+      fetchLibros();
+      document.title = `Sección: ${tema}`;
+    }
   }, [tema]);
 
   if (cargando) return <p>Cargando libros...</p>;
@@ -68,9 +80,9 @@ function Seccion() {
             <BloqueTema
               key={libro.id}
               id={libro.id}
-              title={libro.title}
-              autor={libro.author?.name || "Autor desconocido"}
-              img={libro.imageUrl}
+              title={libro.titulo}
+              autor={libro.author?.nombre || libro.autor || "Autor desconocido"}
+              img={libro.portada}
             />
           ))
         ) : (

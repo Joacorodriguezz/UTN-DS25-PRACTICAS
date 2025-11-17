@@ -24,13 +24,17 @@ function DetalleLibro() {
           const response = await axios.get(API_ENDPOINTS.BOOKS.GET_BY_ID(id), {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
-          setLibro(response.data);
+          // La respuesta del backend tiene formato { data: {...} }
+          setLibro(response.data.data || response.data);
         } catch (err) {
           // Si no existe el endpoint por ID, obtener todos y filtrar
           const allBooksResponse = await axios.get(API_ENDPOINTS.BOOKS.GET_ALL, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
-          const libroEncontrado = allBooksResponse.data.find(
+          // La respuesta del backend tiene formato { data, total, page, pageSize }
+          const librosData = allBooksResponse.data.data || allBooksResponse.data;
+          const librosArray = Array.isArray(librosData) ? librosData : [];
+          const libroEncontrado = librosArray.find(
             (libro) => libro.id === parseInt(id)
           );
           if (libroEncontrado) {
@@ -85,43 +89,33 @@ function DetalleLibro() {
       <Paper elevation={3} sx={{ p: 4 }}>
         <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
           <Box flex={1}>
-            <img
-              src={libro.imageUrl}
-              alt={libro.title}
-              className="libro-imagen-detalle"
-            />
+            {libro.portada && (
+              <img
+                src={libro.portada}
+                alt={libro.titulo}
+                className="libro-imagen-detalle"
+              />
+            )}
           </Box>
           <Box flex={2}>
             <Typography variant="h3" component="h1" gutterBottom>
-              {libro.title}
+              {libro.titulo}
             </Typography>
             
-            {libro.author && (
-              <Typography variant="h5" color="text.secondary" gutterBottom>
-                Autor: {libro.author.name}
-              </Typography>
-            )}
-            
-            {libro.author?.nationality && (
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                Nacionalidad: {libro.author.nationality}
-              </Typography>
-            )}
+            <Typography variant="h5" color="text.secondary" gutterBottom>
+              Autor: {libro.author?.nombre || libro.autor || "Autor desconocido"}
+            </Typography>
 
             <Box my={2}>
               <Chip 
-                label={libro.genre?.replace("_", " ") || "Sin género"} 
+                label={libro.categoria || "Sin categoría"} 
                 color="primary" 
                 sx={{ mr: 1 }}
-              />
-              <Chip 
-                label={`$${libro.price}`} 
-                color="success" 
               />
             </Box>
 
             <Typography variant="body1" paragraph sx={{ mt: 3 }}>
-              {libro.description || "No hay descripción disponible para este libro."}
+              {libro.descripcion || "No hay descripción disponible para este libro."}
             </Typography>
 
             <Box mt={4}>
